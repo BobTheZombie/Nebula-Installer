@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, Sequence
 
+from .constants import DEFAULT_BOOTSTRAP_PACKAGES
+
 
 @dataclass(slots=True)
 class Partition:
@@ -69,11 +71,11 @@ class InstallConfig:
         packages: Iterable[str] = data.get("packages", [])
         bootstrap_packages: Iterable[str] = data.get(
             "bootstrap_packages",
-            ("nebula-base", "linux", "kernel-modules"),
+            DEFAULT_BOOTSTRAP_PACKAGES,
         )
         return cls(
             target_root=Path(data["target_root"]).resolve(),
-            hostname=data.get("hostname", "nebula"),
+            hostname=data.get("hostname", "luminos"),
             timezone=data.get("timezone", "UTC"),
             locale=data.get("locale", "en_US.UTF-8"),
             bootstrap_packages=tuple(bootstrap_packages),

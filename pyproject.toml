@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nebula-installer"
 version = "0.1.0"
-description = "Nebula OS installer backed by lpm"
+description = "Nebula Installer for LuminOS backed by LPM"
 readme = "README.md"
 authors = [{name = "Nebula OS"}]
 requires-python = ">=3.9"
@@ -15,7 +15,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
 ]
-dependencies = []
+dependencies = [
+    "textual>=0.47.1",
+]
 
 [project.scripts]
 nebula-installer = "nebula_installer.__main__:main"
