@@ -57,6 +57,7 @@ class InstallConfig:
     hostname: str
     timezone: str
     locale: str
+    bootstrap_packages: Sequence[str]
     packages: Sequence[str]
     partitions: Sequence[Partition]
     user: User
@@ -66,11 +67,16 @@ class InstallConfig:
         partitions = [Partition.from_dict(item) for item in data.get("partitions", [])]
         user = User.from_dict(data["user"])
         packages: Iterable[str] = data.get("packages", [])
+        bootstrap_packages: Iterable[str] = data.get(
+            "bootstrap_packages",
+            ("nebula-base", "linux", "kernel-modules"),
+        )
         return cls(
             target_root=Path(data["target_root"]).resolve(),
             hostname=data.get("hostname", "nebula"),
             timezone=data.get("timezone", "UTC"),
             locale=data.get("locale", "en_US.UTF-8"),
+            bootstrap_packages=tuple(bootstrap_packages),
             packages=tuple(packages),
             partitions=tuple(partitions),
             user=user,
@@ -82,6 +88,7 @@ class InstallConfig:
             "hostname": self.hostname,
             "timezone": self.timezone,
             "locale": self.locale,
+            "bootstrap_packages": list(self.bootstrap_packages),
             "packages": list(self.packages),
             "partitions": [
                 {

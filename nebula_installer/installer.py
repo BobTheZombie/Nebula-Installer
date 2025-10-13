@@ -22,12 +22,21 @@ class Installer:
     def run(self) -> None:
         LOGGER.info("Starting Nebula installation into %s", self.config.target_root)
         self.config.target_root.mkdir(parents=True, exist_ok=True)
+        self._bootstrap_base_system()
         self._generate_sysconfig()
         self._install_packages()
         self._configure_fstab()
         self._register_hooks()
         self._ensure_user()
         LOGGER.info("Nebula installation complete")
+
+    def _bootstrap_base_system(self) -> None:
+        LOGGER.debug("Bootstrapping base system packages")
+        lpm.install_packages(
+            self.config.bootstrap_packages,
+            self.config.target_root,
+            reinstall=False,
+        )
 
     def _generate_sysconfig(self) -> None:
         LOGGER.debug("Generating base sysconfig")

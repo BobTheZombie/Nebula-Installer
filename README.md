@@ -24,6 +24,14 @@ using the helper scripts recently introduced to the project, including:
 4. Review the log output. The installer is idempotent, so re-running it after
    adjusting the configuration reconciles the chroot with your desired state.
 
+An interactive wizard is also available, which prompts for the target root
+directory, user credentials, and package selections. The wizard can optionally
+write the resulting configuration to disk for later reuse:
+
+```bash
+sudo python -m nebula_installer --interactive --write-config install.json
+```
+
 ### Configuration reference
 
 The configuration file is JSON and supports the following fields:
@@ -32,6 +40,9 @@ The configuration file is JSON and supports the following fields:
 - `hostname`: Hostname for the new system
 - `timezone`: Timezone string (e.g. `UTC`)
 - `locale`: Primary locale (e.g. `en_US.UTF-8`)
+- `bootstrap_packages`: Packages used to bootstrap a minimal system via `lpm`
+  before applying the remaining configuration. Defaults to
+  `nebula-base`, `linux`, and `kernel-modules` if omitted.
 - `packages`: Additional packages to install through `lpm`
 - `partitions`: Array of partition objects with `device`, `mountpoint`,
   `filesystem`, `options`, `dump`, and `passno`
@@ -47,6 +58,7 @@ Example:
   "hostname": "nebula-host",
   "timezone": "UTC",
   "locale": "en_US.UTF-8",
+  "bootstrap_packages": ["nebula-base", "linux", "kernel-modules"],
   "packages": ["nebula-desktop"],
   "partitions": [
     {"device": "/dev/sda1", "mountpoint": "/", "filesystem": "ext4"},
