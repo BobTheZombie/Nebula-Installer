@@ -1,10 +1,11 @@
 PYTHON ?= python3
 MAIN_MODULE := nebula_installer/__main__.py
+ENTRY_NAME := $(basename $(notdir $(MAIN_MODULE)))
 BUILD_DIR := build
 APP_MODULE := nebula_installer
 APP_NAME := nebula-installer
 BINARY := $(BUILD_DIR)/$(APP_MODULE).bin
-DIST_DIR := $(BUILD_DIR)/$(APP_MODULE).dist
+DIST_DIR := $(BUILD_DIR)/$(ENTRY_NAME).dist
 PREFIX ?= /usr/local
 
 .PHONY: all build clean install
