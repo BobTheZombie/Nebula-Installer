@@ -1,4 +1,4 @@
-"""Command line entry point for the Nebula installer."""
+"""Command line entry point for the Nebula Installer for LuminOS."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from .wizard import run_wizard, write_config
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Nebula OS installer")
+    parser = argparse.ArgumentParser(description="Nebula Installer for LuminOS")
     parser.add_argument(
         "--config",
         type=Path,

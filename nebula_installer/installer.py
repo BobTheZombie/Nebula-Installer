@@ -20,7 +20,7 @@ class Installer:
         self.config = config
 
     def run(self) -> None:
-        LOGGER.info("Starting Nebula installation into %s", self.config.target_root)
+        LOGGER.info("Starting LuminOS installation into %s", self.config.target_root)
         self.config.target_root.mkdir(parents=True, exist_ok=True)
         self._bootstrap_base_system()
         self._generate_sysconfig()
@@ -28,7 +28,7 @@ class Installer:
         self._configure_fstab()
         self._register_hooks()
         self._ensure_user()
-        LOGGER.info("Nebula installation complete")
+        LOGGER.info("LuminOS installation complete")
 
     def _bootstrap_base_system(self) -> None:
         LOGGER.debug("Bootstrapping base system packages")
