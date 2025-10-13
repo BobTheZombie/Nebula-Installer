@@ -34,6 +34,11 @@ to disk for later reuse:
 sudo python -m nebula_installer --interactive --write-config install.json
 ```
 
+The installer automatically loads the `lpmspec` JSON description exported by
+LPM (defaulting to `/var/lib/lpm/maintainer/lpmspec.json`) to stay in sync with
+the CLI surface. Set the `NEBULA_LPMSPEC_PATH` environment variable to point to
+an alternate specification if necessary.
+
 ### Configuration reference
 
 The configuration file is JSON and supports the following fields:

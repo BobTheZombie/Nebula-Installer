@@ -28,6 +28,7 @@ from textual.widgets import (
 
 from .config import InstallConfig, Partition, User
 from .constants import DEFAULT_BOOTSTRAP_PACKAGES
+from .lpmspec import get_cached_lpmspec
 
 
 @dataclass(slots=True)
@@ -240,12 +241,30 @@ class WizardApp(App[InstallConfig]):
         self._default_bootstrap = (
             tuple(default_bootstrap) if default_bootstrap else DEFAULT_BOOTSTRAP_PACKAGES
         )
+        self._lpmspec = get_cached_lpmspec()
+
+    def _hero_tagline(self) -> str:
+        spec = self._lpmspec
+        if not spec:
+            return "Powered by LPM – the Linux Package Manager"
+
+        details: list[str] = []
+        if spec.lpm_version:
+            details.append(f"v{spec.lpm_version}")
+        if spec.lpm_build:
+            details.append(f"build {spec.lpm_build}")
+        detail_str = " ".join(details)
+
+        base = f"Powered by {spec.lpm_name}"
+        if detail_str:
+            base = f"{base} {detail_str}"
+        return f"{base} – lpmspec API {spec.api_version}"
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with Container(classes="hero"):
             yield Static("Nebula Installer for LuminOS", markup=False)
-            yield Static("Powered by LPM – the Linux Package Manager", classes="tagline")
+            yield Static(self._hero_tagline(), classes="tagline")
         with TabbedContent():
             with TabPane("System"):
                 with Container():

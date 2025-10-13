@@ -35,7 +35,6 @@ class Installer:
         lpm.install_packages(
             self.config.bootstrap_packages,
             self.config.target_root,
-            reinstall=False,
         )
 
     def _generate_sysconfig(self) -> None:

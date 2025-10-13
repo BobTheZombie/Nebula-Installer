@@ -7,9 +7,28 @@ import os
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from .. import lpmspec
+
 from . import commands
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _required_global_flag(flag: str) -> None:
+    spec = lpmspec.get_cached_lpmspec()
+    if spec and not spec.cli.find_argument_by_flag(flag):
+        raise RuntimeError(f"lpmspec no longer exposes the global '{flag}' option")
+
+
+def _ensure_install_command() -> lpmspec.CLICommand | None:
+    spec = lpmspec.get_cached_lpmspec()
+    if not spec:
+        return None
+
+    command = spec.cli.get_command("install")
+    if command is None:
+        raise RuntimeError("lpmspec is missing the 'install' command required by Nebula")
+    return command
 
 
 def generate_sysconfig(
@@ -22,12 +41,10 @@ def generate_sysconfig(
 ) -> commands.CommandResult:
     """Invoke ``lpm --sysconfig`` and apply additional configuration."""
 
-    command = [
-        "lpm",
-        "--sysconfig",
-        "--sysconfig-root",
-        str(target_root),
-    ]
+    _required_global_flag("--sysconfig")
+    _required_global_flag("--sysconfig-root")
+
+    command = ["lpm", "--sysconfig", "--sysconfig-root", str(target_root)]
 
     LOGGER.info("Generating system configuration via lpm --sysconfig")
     result = commands.run(command, env=extra_env)
@@ -113,7 +130,6 @@ def install_packages(
     packages: Sequence[str],
     target_root: Path,
     *,
-    reinstall: bool = False,
     extra_env: Mapping[str, str] | None = None,
 ) -> commands.CommandResult | None:
     """Install packages into the target root using ``lpm``."""
@@ -122,9 +138,11 @@ def install_packages(
         LOGGER.info("No additional packages requested; skipping lpm install")
         return None
 
+    install_spec = _ensure_install_command()
+    if install_spec and not install_spec.find_argument_by_flag("--root"):
+        raise RuntimeError("lpmspec install command no longer accepts --root")
+
     command = ["lpm", "install", "--root", str(target_root)]
-    if reinstall:
-        command.append("--reinstall")
     command.extend(packages)
 
     LOGGER.info("Installing %d package(s) via lpm", len(packages))
