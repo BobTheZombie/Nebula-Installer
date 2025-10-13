@@ -7,13 +7,13 @@ import logging
 from pathlib import Path
 
 from .installer import Installer, load_config
+from .wizard import run_wizard, write_config
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nebula OS installer")
     parser.add_argument(
         "--config",
-        required=True,
         type=Path,
         help="Path to the installation configuration JSON file",
     )
@@ -22,6 +22,16 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Logging verbosity",
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Run the interactive setup wizard",
+    )
+    parser.add_argument(
+        "--write-config",
+        type=Path,
+        help="Optional path to save the generated configuration when using --interactive",
     )
     return parser.parse_args()
 
@@ -32,7 +42,20 @@ def main() -> None:
         level=getattr(logging, args.log_level),
         format="%(levelname)s:%(name)s:%(message)s",
     )
-    config = load_config(args.config)
+    if not args.interactive and not args.config:
+        raise SystemExit("Either --config or --interactive must be provided.")
+
+    base_config = load_config(args.config) if args.config else None
+
+    if args.interactive:
+        config = run_wizard(base_config)
+        if args.write_config:
+            write_config(config, args.write_config)
+    else:
+        config = base_config
+        if config is None:
+            raise SystemExit("Failed to load configuration from provided path.")
+
     installer = Installer(config)
     installer.run()
 
