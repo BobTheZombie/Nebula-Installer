@@ -4,7 +4,7 @@ ENTRY_NAME := $(basename $(notdir $(MAIN_MODULE)))
 BUILD_DIR := build
 APP_MODULE := nebula_installer
 APP_NAME := nebula-installer
-BINARY := $(BUILD_DIR)/$(APP_MODULE).bin
+BINARY := $(DIST_DIR)/$(APP_MODULE)
 DIST_DIR := $(BUILD_DIR)/$(ENTRY_NAME).dist
 PREFIX ?= /usr/local
 
