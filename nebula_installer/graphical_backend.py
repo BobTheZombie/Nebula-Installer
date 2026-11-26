@@ -161,6 +161,8 @@ def validate_plan(config: InstallConfig, *, confirmed_target: Path | None = None
         if config.install_mode == "source" and not config.bootstrap_packages:
             if not any((target / p).is_file() for p in ("usr/bin/lpm", "usr/local/bin/lpm", "bin/lpm")):
                 raise PlanError("Source install needs an initialized chroot containing lpm")
+            if not (target / "usr/bin/env").is_file():
+                raise PlanError("Source install needs /usr/bin/env inside the chroot")
 
 
 def apply_stdin(confirmed_target: Path | None) -> None:

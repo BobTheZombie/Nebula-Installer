@@ -410,13 +410,22 @@ class NebulaWindow(QMainWindow):
         )
         if not accepted or typed.strip() != destination:
             return
-        if os.geteuid() != 0 and not shutil.which("pkexec"):
-            QMessageBox.critical(
-                self, "Authorization unavailable",
-                "Install polkit/pkexec with a desktop authentication agent. "
-                "The GUI must authorize its privileged worker before installation.",
-            )
-            return
+        if os.geteuid() != 0:
+            if not shutil.which("pkexec"):
+                QMessageBox.critical(
+                    self, "Authorization unavailable",
+                    "Install polkit/pkexec and an authentication agent.",
+                )
+                return
+            # Never elevate user-writable source from a checkout or virtualenv.
+            worker = Path("/usr/bin/nebula-installer")
+            if not worker.is_file() or worker.stat().st_uid != 0:
+                QMessageBox.critical(
+                    self, "System package required",
+                    "Install the Nebula system package first. The authorized "
+                    "worker must be /usr/bin/nebula-installer and owned by root.",
+                )
+                return
         self._set_page(5)
         self.password.clear()
         self.password2.clear()
@@ -426,12 +435,14 @@ class NebulaWindow(QMainWindow):
         self.process.readyReadStandardOutput.connect(self._read_stdout)
         self.process.readyReadStandardError.connect(self._read_stderr)
         self.process.finished.connect(self._worker_finished)
-        args = ["-u", "-m", "nebula_installer", "--apply-stdin",
-                "--confirm-target", destination]
-        cmd = sys.executable
-        if os.geteuid() != 0:
-            args = [cmd, *args]
+        if os.geteuid() == 0:
+            cmd = sys.executable
+            args = ["-u", "-m", "nebula_installer", "--apply-stdin",
+                    "--confirm-target", destination]
+        else:
             cmd = shutil.which("pkexec")
+            args = ["/usr/bin/nebula-installer", "--apply-stdin",
+                    "--confirm-target", destination]
         self.process.start(cmd, args)
         if not self.process.waitForStarted(6000):
             self.log.appendPlainText("Failed to launch installer: " + self.process.errorString())

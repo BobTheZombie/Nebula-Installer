@@ -15,15 +15,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
 ]
-dependencies = [
-    "textual>=0.47.1",
-]
+dependencies = []
 
 [project.scripts]
 nebula-installer = "nebula_installer.__main__:main"
 
 [project.optional-dependencies]
 gui = ["PySide6>=6.8"]
+tui = ["textual>=0.47.1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

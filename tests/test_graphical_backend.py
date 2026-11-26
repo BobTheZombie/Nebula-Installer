@@ -94,3 +94,16 @@ def test_default_existing_cli_config_is_unchanged():
     assert config.install_mode == "repository"
     assert config.register_grub_hook is True
     assert tuple(config.bootstrap_packages) == tuple(DEFAULT_BOOTSTRAP_PACKAGES)
+
+
+def test_source_mode_does_not_fall_back_to_host_buildpkg(monkeypatch, tmp_path):
+    monkeypatch.setattr(lpm.lpmspec, "get_cached_lpmspec", lambda: None)
+    with pytest.raises(RuntimeError, match="requires lpm installed inside"):
+        lpm.build_packages_in_chroot(["plasma6-full"], tmp_path)
+
+
+def test_rejects_fstab_newline_injection():
+    c = _config()
+    c.partitions = (Partition("/dev/vda2", "/", "ext4\\n/dev/vdb1 /home xfs"),)
+    with pytest.raises(PlanError, match="Invalid fstab"):
+        validate_plan(c, check_environment=False)

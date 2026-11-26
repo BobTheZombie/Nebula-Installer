@@ -28,20 +28,31 @@ installer, **not** a fully automated disk partitioner.
 
 ## Install the GUI
 
-In a functioning LPM Linux live desktop with Python, PySide6, Textual, LPM,
-OpenSSL, polkit (pkexec) and a desktop authentication agent:
+On a functioning LPM Linux live desktop you need Python, PySide6, LPM,
+OpenSSL, polkit (`pkexec`) and a desktop authentication agent. Install the
+Nebula package **system-wide** so its root-owned executable exists at
+`/usr/bin/nebula-installer`. An LPM recipe is the preferred way to deploy
+this in the live ISO; do not install the privileged worker from a writable
+user directory or checkout.
 
 ```sh
-git clone https://github.com/BobTheZombie/Nebula-Installer.git
-cd Nebula-Installer
-python3 -m pip install --user '.[gui]'
+# Once the recipe has been published to the LPM package index:
+lpm buildpkg nebula-installer --yes
 nebula-installer --gui
 ```
 
-On LPM you can install `pyside6` and `polkit` from available package recipes
-instead of using pip for these dependencies. Run the GUI as the **ordinary desktop
-user**, *not sudo*, so that KDE's Wayland display remains accessible. The
-separate worker is authorized via polkit.
+For local nonprivileged GUI development use:
+
+```sh
+python3 -m pip install --user '.[gui]'
+python3 -m nebula_installer --gui
+```
+
+**Note:** the local development install can preview the wizard, but the
+privileged Install action requires the separate root-owned system package.
+Run the GUI as the **ordinary desktop user**, *not sudo*, to preserve KDE
+Wayland access. The separate worker is authorized via polkit. A Textual
+terminal wizard is available via `pip install '.[tui]'`.
 
 ## Prepare the target manually
 
@@ -92,7 +103,8 @@ Qt/Wayland environment, a live LPM target and deliberate manual testing.
 
 ## Legacy terminal installer
 
-The older JSON and Textual wizard interface remains supported:
+The older JSON and Textual wizard interface remains supported (install the
+`tui` dependency extra if using the Textual interface):
 
 A Python-based installer for LuminOS backed by **LPM – the Linux Package
 Manager**. The tool orchestrates filesystem preparation, package installation,
