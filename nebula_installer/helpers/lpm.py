@@ -147,3 +147,43 @@ def install_packages(
 
     LOGGER.info("Installing %d package(s) via lpm", len(packages))
     return commands.run(command, env=extra_env)
+
+
+def build_packages_in_chroot(
+    packages: Sequence[str],
+    target_root: Path,
+) -> commands.CommandResult | None:
+    """Build and install sources *inside* an initialized LPM target.
+
+    LPM buildpkg doesn't accept --root. Running it on the live host would modify
+    the live session, so instead execute through chroot. The target must already
+    contain lpm, a build toolchain, networking and mounted /dev,/proc,/sys.
+    """
+    if not packages:
+        return None
+
+    spec = lpmspec.get_cached_lpmspec()
+    if spec and spec.cli.get_command("buildpkg") is None:
+        raise RuntimeError("lpmspec is missing the buildpkg command")
+
+    lpm_bin = next(
+        (path for path in ("/usr/bin/lpm", "/usr/local/bin/lpm", "/bin/lpm")
+         if (target_root / path.lstrip("/")).is_file()),
+        None,
+    )
+    if lpm_bin is None:
+        raise RuntimeError(
+            "Source installation requires lpm installed inside the target root; "
+            "bootstrap it from the repository or prepare the chroot first."
+        )
+
+    result = None
+    for package in packages:
+        LOGGER.info("Building source package %s inside %s", package, target_root)
+        result = commands.run([
+            "chroot", str(target_root),
+            "/usr/bin/env", "-i",
+            "HOME=/root", "PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin",
+            lpm_bin, "buildpkg", package, "--yes",
+        ])
+    return result
