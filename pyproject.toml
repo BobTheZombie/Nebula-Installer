@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nebula-installer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Nebula graphical and terminal OS installer for LPM Linux"
 readme = "README.md"
 authors = [{name = "Nebula OS"}]

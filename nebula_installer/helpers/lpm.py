@@ -162,10 +162,6 @@ def build_packages_in_chroot(
     if not packages:
         return None
 
-    spec = lpmspec.get_cached_lpmspec()
-    if spec and spec.cli.get_command("buildpkg") is None:
-        raise RuntimeError("lpmspec is missing the buildpkg command")
-
     lpm_bin = next(
         (path for path in ("/usr/bin/lpm", "/usr/local/bin/lpm", "/bin/lpm")
          if (target_root / path.lstrip("/")).is_file()),

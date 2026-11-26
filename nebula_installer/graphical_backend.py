@@ -24,6 +24,10 @@ class PlanError(ValueError):
 
 
 PACKAGE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+:-]{0,127}$")
+DEVICE = re.compile(r"^(?:/dev/[A-Za-z0-9_./+-]+|UUID=[A-Fa-f0-9-]+|PARTUUID=[A-Fa-f0-9-]+|LABEL=[A-Za-z0-9_.-]+)$")
+FSTYPE = re.compile(r"^[A-Za-z0-9_+-]+$")
+OPTIONS = re.compile(r"^[A-Za-z0-9_,=./:-]+$")
+
 HOSTNAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}$")
 USERNAME = re.compile(r"^[a-z_][a-z0-9_-]{0,30}$")
 LOCALE = re.compile(r"^[A-Za-z0-9_.@-]{1,90}$")
@@ -41,8 +45,8 @@ def package_names(value: str) -> tuple[str, ...]:
 
 def partition_rows(root_device: str, root_fs: str, extras: str) -> tuple[Partition, ...]:
     root_device, root_fs = root_device.strip(), root_fs.strip()
-    if not root_device or not root_fs:
-        raise PlanError("Root partition device and filesystem are required")
+    if not DEVICE.fullmatch(root_device) or not FSTYPE.fullmatch(root_fs):
+        raise PlanError("Root device must be a /dev path, UUID, PARTUUID or LABEL and have a filesystem")
     rows = [Partition(device=root_device, mountpoint="/", filesystem=root_fs, passno=1)]
     seen = {"/"}
     for lineno, line in enumerate(extras.splitlines(), 1):
@@ -53,9 +57,11 @@ def partition_rows(root_device: str, root_fs: str, extras: str) -> tuple[Partiti
             raise PlanError(f"Partition line {lineno}: expected DEVICE | MOUNTPOINT | FSTYPE | OPTIONS")
         dev, mount, fs = bits[:3]
         opt = bits[3] if len(bits) == 4 else "defaults"
-        if (not dev or not mount.startswith("/") or
-                ".." in Path(mount).parts or not fs or
-                mount in seen or any(ch.isspace() for ch in dev + fs + opt)):
+        if (not DEVICE.fullmatch(dev) or not mount.startswith("/") or
+                mount != str(Path(mount)) or
+                ".." in Path(mount).parts or any(ch.isspace() for ch in mount) or
+                not FSTYPE.fullmatch(fs) or not OPTIONS.fullmatch(opt) or
+                mount in seen):
             raise PlanError(f"Invalid or duplicate partition entry on line {lineno}")
         seen.add(mount)
         rows.append(Partition(dev, mount, fs, opt, passno=0 if fs in ("vfat", "swap") else 2))
@@ -132,9 +138,13 @@ def validate_plan(config: InstallConfig, *, confirmed_target: Path | None = None
     if config.register_grub_hook or config.sync_fstab_mounts:
         raise PlanError("Graphical installer does not enable legacy GRUB hooks or mount synchronization")
     for part in config.partitions:
-        if (not part.device or not part.filesystem or not part.mountpoint.startswith("/")
-                or ".." in Path(part.mountpoint).parts or
-                any(ch.isspace() for ch in part.device + part.filesystem + part.options)):
+        if (not DEVICE.fullmatch(part.device) or
+                not FSTYPE.fullmatch(part.filesystem) or
+                not OPTIONS.fullmatch(part.options) or
+                not part.mountpoint.startswith("/") or
+                part.mountpoint != str(Path(part.mountpoint)) or
+                ".." in Path(part.mountpoint).parts or
+                any(ch.isspace() for ch in part.mountpoint)):
             raise PlanError("Invalid fstab partition data")
     if check_environment:
         if not target.exists() or not target.is_dir() or not os.path.ismount(target):
@@ -142,6 +152,10 @@ def validate_plan(config: InstallConfig, *, confirmed_target: Path | None = None
         for name in ("dev", "proc", "sys"):
             if not os.path.ismount(target / name):
                 raise PlanError(f"Bind/mount {target / name} before installing (see README)")
+        for part in config.partitions:
+            if (part.mountpoint != "/" and part.filesystem != "swap" and
+                    not os.path.ismount(target / part.mountpoint.lstrip("/"))):
+                raise PlanError(f"Mount the selected {part.mountpoint} partition before installing")
         if (config.install_mode == "repository" or config.bootstrap_packages) and not shutil.which("lpm"):
             raise PlanError("Host lpm executable not available")
         if config.install_mode == "source" and not config.bootstrap_packages:

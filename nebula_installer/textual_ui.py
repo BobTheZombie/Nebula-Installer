@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import crypt
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
@@ -29,6 +28,7 @@ from textual.widgets import (
 from .config import InstallConfig, Partition, User
 from .constants import DEFAULT_BOOTSTRAP_PACKAGES
 from .lpmspec import get_cached_lpmspec
+from .graphical_backend import hash_password
 
 
 @dataclass(slots=True)
@@ -405,7 +405,7 @@ class WizardApp(App[InstallConfig]):
         if password_value:
             if password_value != confirm_password:
                 raise ValueError("Passwords do not match")
-            hashed_password = crypt.crypt(password_value, crypt.mksalt(crypt.METHOD_SHA512))
+            hashed_password = hash_password(password_value)
         else:
             if self.base_config and self.base_config.user.password:
                 hashed_password = self.base_config.user.password

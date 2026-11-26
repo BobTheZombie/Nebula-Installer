@@ -1,4 +1,98 @@
-# Nebula Installer for LuminOS
+# Nebula Installer — graphical LPM Linux installer (preview)
+
+Nebula now offers an original **Qt 6 / PySide6 graphical installation wizard**
+for LPM Linux. It is designed for the LPM live environment and integrates with
+the project's existing terminal installer. This is an early *mounted-target*
+installer, **not** a fully automated disk partitioner.
+
+## Graphical workflow
+
+1. **Welcome:** see supported installation modes and storage limitations.
+2. **Storage:** select an already mounted target root and its fstab root device,
+   and enter other already mounted /boot, /home, or EFI partitions.
+3. **Packages:** choose **Repository binaries** or **Build from source**; list
+   optional repository bootstrap packages and the final desktop/system packages.
+4. **Identity:** enter hostname, locale, timezone, user, and a password. OpenSSL
+   converts passwords to SHA-512 crypt hashes; plaintext is not saved in plans.
+5. **Review:** inspect exact target, package names, mount table, and type the
+   destination to authorize installation.
+6. **Install:** polkit runs a minimal, separately privileged Python worker.
+   QProcess displays live output; the GUI stays unprivileged throughout.
+
+**Commands**
+
+- Repository: `lpm install --root TARGET pkg1 pkg2 …`
+- Source: `chroot TARGET /usr/bin/env -i HOME=/root PATH=... /usr/bin/lpm buildpkg PACKAGE --yes`
+- Optional bootstrap packages always use the repository. Source-mode target
+  must have LPM, a compiler/toolchain, network access, and runtime mountpoints.
+
+## Install the GUI
+
+In a functioning LPM Linux live desktop with Python, PySide6, Textual, LPM,
+OpenSSL, polkit (pkexec) and a desktop authentication agent:
+
+```sh
+git clone https://github.com/BobTheZombie/Nebula-Installer.git
+cd Nebula-Installer
+python3 -m pip install --user '.[gui]'
+nebula-installer --gui
+```
+
+On LPM you can install `pyside6` and `polkit` from available package recipes
+instead of using pip for these dependencies. Run the GUI as the **ordinary desktop
+user**, *not sudo*, so that KDE's Wayland display remains accessible. The
+separate worker is authorized via polkit.
+
+## Prepare the target manually
+
+**Carefully choose the correct destination** and create/mount partitions
+*outside Nebula*. The following assumes the root partition has already been
+prepared and mounted at `/mnt/lpm`:
+
+```sh
+sudo mkdir -p /mnt/lpm/{dev,proc,sys}
+sudo mount --rbind /dev /mnt/lpm/dev
+sudo mount --make-rslave /mnt/lpm/dev
+sudo mount -t proc proc /mnt/lpm/proc
+sudo mount --rbind /sys /mnt/lpm/sys
+sudo mount --make-rslave /mnt/lpm/sys
+```
+
+Mount any chosen /home, /boot, or EFI partitions **under the target** before
+starting the installer. The GUI requires those paths to be mountpoints.
+The destination must itself be an existing mountpoint, and `/` is forbidden.
+
+For source installations, the target must be a runnable LPM chroot with
+`/usr/bin/env`, `lpm`, a complete build toolchain, and working DNS/network.
+For example, set up `/etc/resolv.conf` inside the target appropriately.
+Source builds run *inside that chroot*, never on the live host.
+
+The installer generates sysconfig, writes /etc/fstab, and manages a user
+account after installing the requested packages. **It does not** format or
+partition disks, select a disk automatically, enroll secure boot, configure a
+bootloader, or reboot. A complete, bootable system additionally requires you to
+configure the kernel/initramfs, boot entries (e.g. systemd-boot or GRUB),
+filesystem layout, and platform services. Test in a VM before touching
+physical disks.
+
+### Logs and safety
+
+The GUI validates package identifiers, mountpoints, hostname, user input and
+fstab entries, then rechecks them in the root worker. It blocks bootloader-hook
+registration and automatic mount synchronization that belong to the older
+terminal workflow. It refuses to begin without an explicit typed target
+confirmation. Any package transaction can still overwrite files *inside the
+selected target*, so have backups.
+
+Run tests with `python3 -m pytest -q`. Headless tests cover command dispatch
+and plan validation; PySide6 screens and complete installation require a real
+Qt/Wayland environment, a live LPM target and deliberate manual testing.
+
+---
+
+## Legacy terminal installer
+
+The older JSON and Textual wizard interface remains supported:
 
 A Python-based installer for LuminOS backed by **LPM – the Linux Package
 Manager**. The tool orchestrates filesystem preparation, package installation,

@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 
 from .installer import Installer, load_config
-from .wizard import run_wizard, write_config
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +67,7 @@ def main() -> None:
     if not args.interactive and not args.config:
         raise SystemExit("Provide --config, --interactive, or --gui.")
 
+    from .wizard import run_wizard, write_config
     base_config = load_config(args.config) if args.config else None
 
     if args.interactive:
