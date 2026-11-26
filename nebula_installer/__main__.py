@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 
 from .installer import Installer, load_config
-from .wizard import run_wizard, write_config
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,6 +21,21 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Logging verbosity",
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Launch the Qt 6 graphical LPM Linux installer",
+    )
+    parser.add_argument(
+        "--apply-stdin",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--confirm-target",
+        type=Path,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--interactive",
@@ -42,9 +56,18 @@ def main() -> None:
         level=getattr(logging, args.log_level),
         format="%(levelname)s:%(name)s:%(message)s",
     )
+    if args.gui:
+        from .graphical_ui import run_graphical
+        run_graphical()
+        return
+    if args.apply_stdin:
+        from .graphical_backend import apply_stdin
+        apply_stdin(args.confirm_target)
+        return
     if not args.interactive and not args.config:
-        raise SystemExit("Either --config or --interactive must be provided.")
+        raise SystemExit("Provide --config, --interactive, or --gui.")
 
+    from .wizard import run_wizard, write_config
     base_config = load_config(args.config) if args.config else None
 
     if args.interactive:

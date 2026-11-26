@@ -63,6 +63,11 @@ class InstallConfig:
     packages: Sequence[str]
     partitions: Sequence[Partition]
     user: User
+    # Repository mode installs binaries into a mounted target via --root.
+    # Source mode builds within the target chroot, never on the live host.
+    install_mode: str = "repository"
+    register_grub_hook: bool = True
+    sync_fstab_mounts: bool = True
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InstallConfig":
@@ -82,11 +87,17 @@ class InstallConfig:
             packages=tuple(packages),
             partitions=tuple(partitions),
             user=user,
+            install_mode=data.get("install_mode", "repository"),
+            register_grub_hook=bool(data.get("register_grub_hook", True)),
+            sync_fstab_mounts=bool(data.get("sync_fstab_mounts", True)),
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "target_root": str(self.target_root),
+            "install_mode": self.install_mode,
+            "register_grub_hook": self.register_grub_hook,
+            "sync_fstab_mounts": self.sync_fstab_mounts,
             "hostname": self.hostname,
             "timezone": self.timezone,
             "locale": self.locale,

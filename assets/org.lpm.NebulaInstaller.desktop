@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Nebula Installer
+GenericName=LPM Linux OS Installer
+Comment=Graphical source and repository installer for prepared LPM Linux partitions
+Type=Application
+Exec=nebula-installer --gui
+Icon=system-software-install
+Categories=System;Settings;
+Terminal=false
+StartupNotify=true

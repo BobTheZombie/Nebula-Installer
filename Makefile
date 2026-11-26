@@ -24,6 +24,8 @@ install: build
 	cp -a $(DIST_DIR)/. $(DESTDIR)$(PREFIX)/lib/$(APP_NAME)/
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m755 $(BINARY) $(DESTDIR)$(PREFIX)/bin/$(APP_NAME)
+	install -d $(DESTDIR)$(PREFIX)/share/applications
+	install -m644 assets/org.lpm.NebulaInstaller.desktop $(DESTDIR)$(PREFIX)/share/applications/
 
 clean:
 	rm -rf $(BUILD_DIR)

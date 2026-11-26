@@ -20,7 +20,7 @@ class Installer:
         self.config = config
 
     def run(self) -> None:
-        LOGGER.info("Starting LuminOS installation into %s", self.config.target_root)
+        LOGGER.info("Starting LPM Linux installation (%s) into %s", self.config.install_mode, self.config.target_root)
         self.config.target_root.mkdir(parents=True, exist_ok=True)
         self._bootstrap_base_system()
         self._generate_sysconfig()
@@ -28,7 +28,7 @@ class Installer:
         self._configure_fstab()
         self._register_hooks()
         self._ensure_user()
-        LOGGER.info("LuminOS installation complete")
+        LOGGER.info("LPM Linux installation complete")
 
     def _bootstrap_base_system(self) -> None:
         LOGGER.debug("Bootstrapping base system packages")
@@ -48,20 +48,27 @@ class Installer:
 
     def _install_packages(self) -> None:
         LOGGER.debug("Installing packages")
-        lpm.install_packages(self.config.packages, self.config.target_root)
+        if self.config.install_mode == "source":
+            lpm.build_packages_in_chroot(self.config.packages, self.config.target_root)
+        elif self.config.install_mode == "repository":
+            lpm.install_packages(self.config.packages, self.config.target_root)
+        else:
+            raise ValueError("Unknown installation mode")
 
     def _configure_fstab(self) -> None:
         LOGGER.debug("Writing fstab entries")
         fstab_path = fstab.write_fstab(self.config.target_root, self.config.partitions)
         LOGGER.info("fstab written to %s", fstab_path)
-        try:
-            fstab.sync_mounts(self.config.target_root)
-        except commands.CommandError:
-            LOGGER.warning("Continuing despite fstab helper failure")
+        if self.config.sync_fstab_mounts:
+            try:
+                fstab.sync_mounts(self.config.target_root)
+            except commands.CommandError:
+                LOGGER.warning("Continuing despite fstab helper failure")
 
     def _register_hooks(self) -> None:
         LOGGER.debug("Registering update-grub hook")
-        hooks.register_update_grub_hook(self.config.target_root)
+        if self.config.register_grub_hook:
+            hooks.register_update_grub_hook(self.config.target_root)
 
     def _ensure_user(self) -> None:
         LOGGER.debug("Ensuring default user")

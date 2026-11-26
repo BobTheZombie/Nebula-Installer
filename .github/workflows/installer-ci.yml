@@ -1,0 +1,33 @@
+name: Nebula Installer validation
+
+on:
+  pull_request:
+  push:
+    branches: [main, feat/lpm-linux-graphical-installer]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Qt shared libraries for headless testing
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libopengl0 libxkbcommon-x11-0 libxcb-cursor0
+      - name: Install test and UI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[gui,tui]' pytest
+      - name: Compile Python sources
+        run: python -m compileall -q nebula_installer
+      - name: Run installer tests with Qt offscreen
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q

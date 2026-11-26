@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nebula-installer"
-version = "0.1.0"
-description = "Nebula Installer for LuminOS backed by LPM"
+version = "0.2.0"
+description = "Nebula graphical and terminal OS installer for LPM Linux"
 readme = "README.md"
 authors = [{name = "Nebula OS"}]
 requires-python = ">=3.9"
@@ -15,9 +15,18 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
 ]
-dependencies = [
-    "textual>=0.47.1",
-]
+dependencies = []
 
 [project.scripts]
 nebula-installer = "nebula_installer.__main__:main"
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.8"]
+tui = ["textual>=0.47.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["nebula_installer*"]
+exclude = ["assets*", "tests*"]
