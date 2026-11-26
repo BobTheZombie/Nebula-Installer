@@ -26,3 +26,7 @@ tui = ["textual>=0.47.1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["nebula_installer*"]
+exclude = ["assets*", "tests*"]
